@@ -1,0 +1,58 @@
+PARSER_BEGIN(SqlExample)
+
+package org.example;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.ArrayList;
+import java.io.ByteArrayInputStream;
+
+public class SqlExample {
+
+  public static class Select {
+    List<String> columns;
+    String from;
+    public Select(String from, List<String> columns) {
+      this.from = from;
+      this.columns = columns;
+    }
+  }
+
+  public static void main(String args[]) throws ParseException {
+    SqlExample parser = new SqlExample(new ByteArrayInputStream(args[0].getBytes(StandardCharsets.UTF_8)));
+    Select select = parser.Input();
+    System.out.println(select.columns + " " + select.from);
+  }
+}
+
+PARSER_END(SqlExample)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+Select Input() :
+{ String from; List<String> cs = new ArrayList<>();}
+{
+  "SELECT" ColumnList(cs) "FROM" from = Id() <EOF>
+  { return new Select(from, cs); }
+}
+
+void ColumnList(List<String> cs) :
+{ String id; }
+{
+  id = Id()
+  { cs.add(id); }
+  ( "," id = Id() { cs.add(id); } )*
+}
+
+String Id() :
+{ Token t; }
+{
+  t = < ID: ["a"-"z","A"-"Z","_"] ( ["a"-"z","A"-"Z","_","0"-"9"] )* >
+  { return t.image; }
+}
